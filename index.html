@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f5efe2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b1714" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Journal">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Daily Journal</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --paper: #f5efe2;
+  --card: #fbf7ed;
+  --ink: #2f2823;
+  --muted: #74685c;
+  --rule: #e2d6c0;
+  --line: #dacdb5;
+  --accent: #a64b2e;
+  --accent-ink: #fff8ef;
+  --tint: rgba(166, 75, 46, 0.09);
+  --danger: #9a2b1c;
+  --shadow: 0 1px 2px rgba(70, 45, 20, 0.06), 0 8px 24px rgba(70, 45, 20, 0.07);
+  --font: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", serif;
+  --fs: 18px;
+  --lh: 32px;
+}
+@media (min-width: 400px) { :root { --fs: 19px; } }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1b1714;
+    --card: #231e1a;
+    --ink: #ebe2d5;
+    --muted: #a99d8e;
+    --rule: #352d26;
+    --line: #40362d;
+    --accent: #e0906e;
+    --accent-ink: #1d1410;
+    --tint: rgba(224, 144, 110, 0.13);
+    --danger: #f09a89;
+    --shadow: none;
+  }
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font: var(--fs) / 1.55 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: var(--tint); }
+.sr {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.col {
+  max-width: 680px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+}
+main.col { padding-bottom: calc(48px + env(safe-area-inset-bottom)); }
+
+/* Tabs */
+.bar {
+  position: sticky; top: 0; z-index: 5;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  padding-top: env(safe-area-inset-top);
+}
+.tabs { display: flex; gap: 8px; }
+.tab {
+  flex: 1; min-height: 50px;
+  appearance: none; -webkit-appearance: none;
+  background: none; border: 0; border-bottom: 3px solid transparent;
+  font: 600 17px / 1 var(--font); letter-spacing: 0.02em;
+  color: var(--muted); cursor: pointer;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+}
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+/* Buttons */
+.btn {
+  appearance: none; -webkit-appearance: none;
+  min-height: 44px; padding: 0 16px;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: transparent; color: var(--ink);
+  font: 600 16px / 1 var(--font);
+  cursor: pointer; touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active { background: var(--tint); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:active { filter: brightness(0.92); background: var(--accent); }
+.btn.primary:disabled { opacity: 0.45; cursor: default; }
+.btn.danger { border-color: var(--danger); color: var(--danger); }
+.btn.link { border-color: transparent; color: var(--accent); padding: 0 10px; margin-left: -10px; }
+.btn.block { width: 100%; }
+.btn.sm { padding: 0 14px; }
+.btn:focus-visible, .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Write tab */
+.head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 20px 0 0; }
+.dow { margin: 0; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+h1.date { margin: 2px 0 0; font-size: 26px; line-height: 1.2; font-weight: normal; }
+.streak {
+  text-align: center; min-width: 76px; padding: 6px 10px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--card);
+}
+.streak b { display: block; font-size: 26px; line-height: 1.1; font-weight: normal; color: var(--accent); }
+.streak span { font-size: 13px; color: var(--muted); }
+.hint { margin: 8px 0 0; font-size: 15px; color: var(--muted); }
+
+.prompt {
+  margin: 14px 0; padding: 14px 16px;
+  background: var(--tint); border-left: 3px solid var(--accent);
+  border-radius: 4px 12px 12px 4px;
+}
+.eyebrow { margin: 0 0 4px; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.ptext { margin: 0; font-style: italic; }
+.prompt .btn { margin-top: 4px; }
+
+.notice, .banner {
+  margin: 0 0 14px; padding: 12px 14px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--card);
+  font-size: 16px;
+}
+.banner { border-color: var(--danger); }
+.banner:empty { display: none; }
+.banner p { margin: 0 0 6px; }
+.notice p { margin: 0; }
+.notice .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+
+.paper {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 14px; box-shadow: var(--shadow); overflow: hidden;
+}
+.paper:focus-within { border-color: var(--accent); }
+.phead {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: 10px 18px; border-bottom: 1px solid var(--rule);
+  font-size: 15px; color: var(--muted);
+}
+#editor {
+  display: block; width: 100%;
+  min-height: max(50vh, 340px);
+  min-height: max(50dvh, 340px);
+  margin: 0; padding: 0 18px;
+  border: 0; border-radius: 0; outline: 0; resize: none; overflow: hidden;
+  appearance: none; -webkit-appearance: none;
+  background-color: transparent;
+  background-image: linear-gradient(to bottom, transparent calc(var(--lh) - 1px), var(--rule) calc(var(--lh) - 1px));
+  background-size: 100% var(--lh);
+  background-repeat: repeat-y;
+  color: var(--ink); caret-color: var(--accent);
+  font: var(--fs) / var(--lh) var(--font);
+}
+#editor::placeholder { color: var(--muted); opacity: 0.75; }
+.wbar { margin-top: 14px; }
+
+/* History tab */
+.hhead { display: flex; justify-content: space-between; align-items: baseline; padding: 20px 0 10px; }
+.hhead h2 { margin: 0; font-size: 26px; font-weight: normal; }
+.note { font-size: 15px; color: var(--muted); }
+.empty { padding: 22px 4px; color: var(--muted); }
+.entry {
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 14px 16px; margin: 0 0 12px; box-shadow: var(--shadow);
+}
+.edate { margin: 0; font-size: 19px; font-weight: 600; line-height: 1.3; }
+.emeta { margin: 2px 0 0; font-size: 15px; color: var(--muted); }
+.eprompt {
+  margin: 10px 0 0; padding-left: 10px; border-left: 2px solid var(--accent);
+  font-style: italic; font-size: 16px; color: var(--muted);
+}
+.etext { margin: 10px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.etext.clamp { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.eactions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+.confirmq { flex-basis: 100%; font-size: 16px; color: var(--danger); }
+
+.tools { margin-top: 28px; padding-top: 6px; border-top: 1px solid var(--line); }
+.tools h3 { margin: 20px 0 10px; font-size: 20px; font-weight: normal; }
+.btnrow { display: flex; flex-wrap: wrap; gap: 8px; }
+.warn {
+  margin: 0 0 12px; padding: 12px 14px; font-size: 16px;
+  border-left: 3px solid var(--accent); background: var(--tint);
+  border-radius: 4px 10px 10px 4px;
+}
+#toolsmsg { min-height: 1.5em; margin: 12px 0 0; font-size: 16px; }
+#toolsmsg.err { color: var(--danger); }
+#lastbackup { margin: 10px 0 0; }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom));
+  transform: translate(-50%, 12px);
+  max-width: min(90vw, 420px); padding: 12px 18px;
+  background: var(--ink); color: var(--paper);
+  border-radius: 999px; font-size: 16px; text-align: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; z-index: 20;
+}
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="col">
+    <div class="tabs" role="tablist" aria-label="Journal sections">
+      <button class="tab" role="tab" id="tab-write" aria-controls="panel-write" aria-selected="true" type="button">Write</button>
+      <button class="tab" role="tab" id="tab-history" aria-controls="panel-history" aria-selected="false" tabindex="-1" type="button">History</button>
+    </div>
+  </div>
+</div>
+
+<main class="col">
+  <div class="banner" id="banner" role="alert"></div>
+
+  <!-- WRITE -->
+  <section id="panel-write" role="tabpanel" aria-labelledby="tab-write">
+    <div class="head">
+      <div>
+        <p class="dow" id="dow"></p>
+        <h1 class="date" id="date"></h1>
+      </div>
+      <div class="streak" aria-live="polite"><b id="streakN">0</b><span>day streak</span></div>
+    </div>
+    <p class="hint" id="hint"></p>
+
+    <div class="prompt">
+      <p class="eyebrow">Daily prompt</p>
+      <p class="ptext" id="prompt" aria-live="polite"></p>
+      <button class="btn link" id="another" type="button">Another</button>
+    </div>
+
+    <div class="notice" id="notice" role="status" hidden>
+      <p id="noticeText"></p>
+      <div class="row">
+        <button class="btn sm" id="noticeView" type="button">View in History</button>
+        <button class="btn sm" id="noticeClose" type="button">Dismiss</button>
+      </div>
+    </div>
+
+    <div class="paper">
+      <div class="phead"><span id="wc" aria-live="off">0 words</span><span id="ds">Blank page</span></div>
+      <label class="sr" for="editor">Write your entry</label>
+      <textarea id="editor" placeholder="Begin anywhere." autocapitalize="sentences" autocomplete="off" spellcheck="true" rows="6"></textarea>
+    </div>
+    <div class="wbar"><button class="btn primary block" id="save" type="button" disabled>Save entry</button></div>
+  </section>
+
+  <!-- HISTORY -->
+  <section id="panel-history" role="tabpanel" aria-labelledby="tab-history" hidden>
+    <div class="hhead"><h2>History</h2><span class="note" id="hcount"></span></div>
+    <p class="empty" id="empty">No entries yet. Your saved pages will appear here, newest first.</p>
+    <div id="list"></div>
+
+    <div class="tools">
+      <h3>Export</h3>
+      <div class="btnrow">
+        <button class="btn" id="exMd" type="button">Download .md</button>
+        <button class="btn" id="exTxt" type="button">Download .txt</button>
+        <button class="btn" id="exCopy" type="button">Copy all</button>
+      </div>
+
+      <h3>Backup</h3>
+      <p class="warn">Your entries live only in this browser on this phone. iOS can clear a website's stored data if you have not opened it for a while (Safari may do this after about a week), or when the phone is low on storage. Export a backup now and then and keep the file somewhere safe, such as Files or iCloud Drive.</p>
+      <div class="btnrow">
+        <button class="btn primary" id="exJson" type="button">Export backup (.json)</button>
+        <button class="btn" id="imp" type="button">Import backup</button>
+      </div>
+      <input class="sr" type="file" id="impFile" accept=".json,application/json" tabindex="-1" aria-label="Choose a backup file">
+      <p class="note" id="lastbackup"></p>
+      <p id="toolsmsg" role="status"></p>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ---------- Constants ---------- */
+  const KEY_ENTRIES = 'wj.entries.v1';
+  const KEY_DRAFT = 'wj.draft.v1';
+  const KEY_META = 'wj.meta.v1';
+  // If the page was in the background longer than this, treat coming back as a fresh open.
+  const REOPEN_AFTER_MS = 20 * 60 * 1000;
+
+  const PROMPTS = [
+    "What small thing made today a little easier?",
+    "Describe a moment from today you would like to remember.",
+    "What are you carrying that you could set down for a while?",
+    "Who did you think of today, and why?",
+    "What did you notice today that you usually walk past?",
+    "Write about a place where you feel at ease.",
+    "What is one thing you are looking forward to?",
+    "What did you learn recently that surprised you?",
+    "Describe the best meal you had this week.",
+    "What would you tell yourself from a year ago?",
+    "What are you grateful for that is easy to overlook?",
+    "Write about a sound, smell, or texture that stayed with you today.",
+    "What is taking up space in your mind right now?",
+    "Describe someone who has been kind to you lately.",
+    "What do you need more of this week, and what could you use less of?",
+    "Write about a small habit you are proud of.",
+    "What did you do today that you did not have to, but wanted to?",
+    "What would a gentle day look like for you tomorrow?",
+    "Write about a memory that makes you smile.",
+    "What is a question you have been avoiding?",
+    "Describe the light in the room you are in right now.",
+    "What is something you have changed your mind about?",
+    "What are you curious about at the moment?",
+    "Write a few lines to someone you miss.",
+    "What helped you through a hard moment recently?",
+    "What does rest mean to you right now?",
+    "Describe a tiny victory from this week.",
+    "What are you ready to forgive yourself for?",
+    "What is one thing you would like to do more slowly?",
+    "How are you, honestly, right now?"
+  ];
+
+  /* ---------- Helpers ---------- */
+  const $ = (id) => document.getElementById(id);
+  const pad = (n) => String(n).padStart(2, '0');
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const countWords = (t) => (String(t).match(/\S+/g) || []).length;
+  const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
+
+  // Builds DOM safely. Strings are always added as text nodes, never parsed as HTML.
+  function el(tag, attrs, ...kids) {
+    const n = document.createElement(tag);
+    if (attrs) for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+    for (const c of kids) if (c != null) n.append(c);
+    return n;
+  }
+
+  const dayKey = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const dayNumber = (d) => Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+  const fmtLong = (ts) => new Date(ts).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const fmtShort = (ts) => new Date(ts).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  const fmtTime = (ts) => new Date(ts).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+
+  /* ---------- Storage ---------- */
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } },
+    del(k) { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } }
+  };
+
+  const banner = $('banner');
+  function addBanner(text) { banner.append(el('p', null, text)); }
+
+  let storageOK = store.set('wj.test', '1');
+  store.del('wj.test');
+  if (!storageOK) {
+    addBanner('This browser is not allowing the page to save data (private browsing, or the file is opened in a preview). Anything you write will be lost when you close it. Open it from your Home Screen or a web address in Safari instead.');
+  }
+  try {
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  } catch (e) { /* ignore */ }
+
+  function cleanEntry(e) {
+    if (!e || typeof e !== 'object') return null;
+    const text = typeof e.text === 'string' ? e.text : '';
+    const createdAt = Number(e.createdAt);
+    if (!text.trim() || !Number.isFinite(createdAt) || createdAt <= 0) return null;
+    return {
+      id: typeof e.id === 'string' && e.id ? e.id.slice(0, 64) : uid(),
+      createdAt,
+      text,
+      prompt: typeof e.prompt === 'string' ? e.prompt.slice(0, 500) : '',
+      words: countWords(text)
+    };
+  }
+
+  function loadEntries() {
+    const raw = store.get(KEY_ENTRIES);
+    if (!raw) return [];
+    try {
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) throw new Error('bad');
+      return arr.map(cleanEntry).filter(Boolean);
+    } catch (e) {
+      store.set('wj.entries.corrupt.' + Date.now(), raw);
+      addBanner('Your saved entries could not be read. A copy of the unreadable data was kept in browser storage. If you have a backup file, use Import backup in History.');
+      return [];
+    }
+  }
+
+  let entries = loadEntries();
+
+  function persistEntries() {
+    const slim = entries.map(({ id, createdAt, text, prompt }) => ({ id, createdAt, text, prompt }));
+    const ok = store.set(KEY_ENTRIES, JSON.stringify(slim));
+    if (!ok) toast('Could not save to this device. Storage may be full or blocked. Export a backup.');
+    return ok;
+  }
+
+  function loadMeta() {
+    try { return JSON.parse(store.get(KEY_META) || '{}') || {}; } catch (e) { return {}; }
+  }
+
+  /* ---------- Elements ---------- */
+  const ed = $('editor');
+  const wc = $('wc');
+  const ds = $('ds');
+  const saveBtn = $('save');
+  const promptEl = $('prompt');
+  const notice = $('notice');
+  const toastEl = $('toast');
+
+  /* ---------- Toast ---------- */
+  let toastTimer = 0;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('on'), 2800);
+  }
+
+  function flash(btn, label) {
+    if (!btn.dataset.label) btn.dataset.label = btn.textContent;
+    btn.textContent = label;
+    clearTimeout(btn._t);
+    btn._t = setTimeout(() => { btn.textContent = btn.dataset.label; }, 1600);
+  }
+
+  /* ---------- Streak and header ---------- */
+  function computeStreak() {
+    const days = new Set(entries.map((e) => dayKey(new Date(e.createdAt))));
+    const now = new Date();
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayDone = days.has(dayKey(d));
+    if (!todayDone) d.setDate(d.getDate() - 1); // today does not break the streak until it ends
+    let n = 0;
+    while (days.has(dayKey(d))) { n++; d.setDate(d.getDate() - 1); }
+    return { n, todayDone };
+  }
+
+  function refreshHeader() {
+    const now = new Date();
+    $('dow').textContent = now.toLocaleDateString(undefined, { weekday: 'long' });
+    $('date').textContent = now.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+    const s = computeStreak();
+    $('streakN').textContent = String(s.n);
+    $('hint').textContent = s.todayDone
+      ? 'You have written today. See you tomorrow.'
+      : (s.n > 0 ? 'Write today to keep your streak going.' : 'Write today to start a streak.');
+  }
+
+  /* ---------- Prompts ---------- */
+  const state = { prompt: '', promptIdx: 0, startedAt: 0 };
+  function setPrompt(i) {
+    const n = PROMPTS.length;
+    state.promptIdx = ((i % n) + n) % n;
+    state.prompt = PROMPTS[state.promptIdx];
+    promptEl.textContent = state.prompt;
+  }
+  const dailyIdx = () => dayNumber(new Date()) % PROMPTS.length;
+
+  $('another').addEventListener('click', () => {
+    setPrompt(state.promptIdx + 1);
+    if (ed.value.trim()) saveDraftNow();
+  });
+
+  /* ---------- Editor ---------- */
+  function fit() {
+    const y = window.scrollY;
+    ed.style.height = 'auto';
+    ed.style.height = ed.scrollHeight + 'px';
+    if (window.scrollY !== y) window.scrollTo(0, y);
+  }
+
+  function updateCount() {
+    wc.textContent = plural(countWords(ed.value), 'word', 'words');
+    saveBtn.disabled = !ed.value.trim();
+  }
+
+  let draftTimer = 0;
+  function saveDraftNow() {
+    clearTimeout(draftTimer);
+    const text = ed.value;
+    if (!text.trim()) { store.del(KEY_DRAFT); ds.textContent = 'Blank page'; return; }
+    const ok = store.set(KEY_DRAFT, JSON.stringify({
+      text, prompt: state.prompt, startedAt: state.startedAt || Date.now(), updatedAt: Date.now()
+    }));
+    ds.textContent = ok ? 'Draft saved' : 'Not saved: storage unavailable';
+  }
+
+  ed.addEventListener('input', () => {
+    if (ed.value.trim()) { if (!state.startedAt) state.startedAt = Date.now(); } else { state.startedAt = 0; }
+    fit();
+    updateCount();
+    ds.textContent = 'Saving...';
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(saveDraftNow, 500);
+  });
+
+  let resizeTimer = 0;
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(fit, 150); });
+
+  function makeEntry(text, prompt, ts) {
+    const t = String(text).replace(/\s+$/, '');
+    return {
+      id: uid(),
+      createdAt: Number.isFinite(ts) && ts > 0 ? ts : Date.now(),
+      text: t,
+      prompt: prompt || '',
+      words: countWords(t)
+    };
+  }
+
+  saveBtn.addEventListener('click', () => {
+    if (!ed.value.trim()) return;
+    const e = makeEntry(ed.value, state.prompt, state.startedAt || Date.now());
+    entries.push(e);
+    if (!persistEntries()) { entries = entries.filter((x) => x !== e); return; }
+    store.del(KEY_DRAFT);
+    ed.value = '';
+    state.startedAt = 0;
+    notice.hidden = true;
+    updateCount();
+    ds.textContent = 'Blank page';
+    fit();
+    refreshHeader();
+    window.scrollTo(0, 0);
+    toast('Saved to History');
+  });
+
+  /* ---------- Fresh start (every open) ---------- */
+  // Moves any leftover draft into History. Returns { entry } on success,
+  // { failed: draft } if storage refused it (so the text is not lost), or null.
+  function recoverDraft() {
+    const raw = store.get(KEY_DRAFT);
+    if (!raw) return null;
+    let d;
+    try { d = JSON.parse(raw); } catch (e) {
+      store.set(KEY_DRAFT + '.corrupt', raw);
+      store.del(KEY_DRAFT);
+      return null;
+    }
+    if (!d || typeof d.text !== 'string' || !d.text.trim()) { store.del(KEY_DRAFT); return null; }
+    const e = makeEntry(d.text, typeof d.prompt === 'string' ? d.prompt : '', Number(d.startedAt) || Number(d.updatedAt));
+    entries.push(e);
+    if (persistEntries()) { store.del(KEY_DRAFT); return { entry: e }; }
+    entries = entries.filter((x) => x !== e);
+    return { failed: d };
+  }
+
+  function showNotice(e) {
+    if (!e) { notice.hidden = true; return; }
+    $('noticeText').textContent = 'Your unsaved page from ' + fmtShort(e.createdAt) + ' at ' + fmtTime(e.createdAt) + ' was saved to History.';
+    notice.hidden = false;
+  }
+
+  function freshStart() {
+    clearTimeout(draftTimer);
+    const r = recoverDraft();
+    setPrompt(dailyIdx());
+    ed.value = '';
+    state.startedAt = 0;
+    if (r && r.failed) {
+      ed.value = r.failed.text;
+      state.startedAt = Number(r.failed.startedAt) || Date.now();
+      if (typeof r.failed.prompt === 'string' && r.failed.prompt) { state.prompt = r.failed.prompt; promptEl.textContent = state.prompt; }
+    }
+    showNotice(r && r.entry);
+    refreshHeader();
+    updateCount();
+    ds.textContent = ed.value.trim() ? 'Draft kept' : 'Blank page';
+    showTab('write');
+  }
+
+  $('noticeClose').addEventListener('click', () => { notice.hidden = true; });
+  $('noticeView').addEventListener('click', () => showTab('history'));
+
+  /* ---------- Tabs ---------- */
+  const tabBtns = { write: $('tab-write'), history: $('tab-history') };
+  const panels = { write: $('panel-write'), history: $('panel-history') };
+
+  function showTab(name) {
+    for (const k of Object.keys(tabBtns)) {
+      const on = k === name;
+      tabBtns[k].setAttribute('aria-selected', String(on));
+      tabBtns[k].tabIndex = on ? 0 : -1;
+      panels[k].hidden = !on;
+    }
+    if (name === 'history') renderHistory(); else fit();
+    window.scrollTo(0, 0);
+  }
+  tabBtns.write.addEventListener('click', () => showTab('write'));
+  tabBtns.history.addEventListener('click', () => showTab('history'));
+  for (const k of Object.keys(tabBtns)) {
+    tabBtns[k].addEventListener('keydown', (ev) => {
+      if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') {
+        const next = k === 'write' ? 'history' : 'write';
+        showTab(next);
+        tabBtns[next].focus();
+      }
+    });
+  }
+
+  /* ---------- Clipboard and download ---------- */
+  async function copyText(t) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(t);
+        return true;
+      }
+    } catch (e) { /* fall through */ }
+    try {
+      const ta = el('textarea', { readonly: '', 'aria-hidden': 'true', tabindex: '-1' });
+      ta.value = t;
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px;';
+      document.body.append(ta);
+      ta.select();
+      ta.setSelectionRange(0, t.length);
+      const ok = document.execCommand('copy');
+      ta.remove();
+      return ok;
+    } catch (e) { return false; }
+  }
+
+  function download(name, mime, content) {
+    const blob = new Blob([content], { type: mime + ';charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = el('a', { href: url, download: name });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+
+  /* ---------- History ---------- */
+  const listEl = $('list');
+  function renderHistory() {
+    const sorted = entries.slice().sort((a, b) => b.createdAt - a.createdAt);
+    $('hcount').textContent = sorted.length ? plural(sorted.length, 'entry', 'entries') : '';
+    $('empty').hidden = sorted.length > 0;
+    listEl.replaceChildren(...sorted.map(entryCard));
+    renderBackupInfo();
+  }
+
+  function entryCard(e) {
+    const long = e.text.length > 260 || e.text.split('\n').length > 5;
+    const body = el('div', { class: 'etext' + (long ? ' clamp' : '') });
+    body.textContent = e.text;
+
+    const actions = el('div', { class: 'eactions' });
+    let expanded = false;
+    let toggle = null;
+    if (long) {
+      toggle = el('button', { class: 'btn sm', type: 'button', 'aria-expanded': 'false' }, 'Read');
+      toggle.addEventListener('click', () => {
+        expanded = !expanded;
+        body.classList.toggle('clamp', !expanded);
+        toggle.setAttribute('aria-expanded', String(expanded));
+        toggle.textContent = expanded ? 'Collapse' : 'Read';
+      });
+    }
+
+    const copyBtn = el('button', { class: 'btn sm', type: 'button' }, 'Copy');
+    copyBtn.addEventListener('click', async () => {
+      const ok = await copyText(e.text);
+      flash(copyBtn, ok ? 'Copied' : 'Copy failed');
+    });
+
+    const delBtn = el('button', { class: 'btn sm', type: 'button' }, 'Delete');
+    delBtn.addEventListener('click', showConfirm);
+
+    function showActions() {
+      actions.replaceChildren(...[toggle, copyBtn, delBtn].filter(Boolean));
+    }
+    function showConfirm() {
+      const q = el('span', { class: 'confirmq' }, 'Delete this entry? This cannot be undone.');
+      const yes = el('button', { class: 'btn sm danger', type: 'button' }, 'Delete');
+      const no = el('button', { class: 'btn sm', type: 'button' }, 'Keep');
+      yes.addEventListener('click', () => {
+        const before = entries;
+        entries = entries.filter((x) => x.id !== e.id);
+        if (!persistEntries()) { entries = before; showActions(); return; }
+        renderHistory();
+        refreshHeader();
+        toast('Entry deleted');
+      });
+      no.addEventListener('click', showActions);
+      actions.replaceChildren(q, yes, no);
+      no.focus();
+    }
+    showActions();
+
+    const words = plural(e.words, 'word', 'words');
+    const card = el('article', { class: 'entry' },
+      el('h3', { class: 'edate' }, fmtLong(e.createdAt)),
+      el('p', { class: 'emeta' }, fmtTime(e.createdAt) + '  ·  ' + words)
+    );
+    if (e.prompt) card.append(el('p', { class: 'eprompt' }, e.prompt));
+    card.append(body, actions);
+    return card;
+  }
+
+  /* ---------- Export ---------- */
+  const sortedAsc = () => entries.slice().sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id));
+  const stamp = () => dayKey(new Date());
+
+  function summaryLine(list) {
+    const total = list.reduce((n, e) => n + e.words, 0);
+    return 'Exported ' + fmtLong(Date.now()) + '  |  ' + plural(list.length, 'entry', 'entries') + '  |  ' + total.toLocaleString() + ' words';
+  }
+
+  function buildMd() {
+    const list = sortedAsc();
+    const out = ['# Writing journal', '', '_' + summaryLine(list) + '_', ''];
+    for (const e of list) {
+      out.push('---', '',
+        '## ' + fmtLong(e.createdAt) + ', ' + fmtTime(e.createdAt), '',
+        '> Prompt: ' + (e.prompt || 'none'), '',
+        '**' + plural(e.words, 'word', 'words') + '**', '',
+        e.text.replace(/\n/g, '  \n'), '');
+    }
+    return out.join('\n');
+  }
+
+  function buildTxt() {
+    const list = sortedAsc();
+    const out = ['WRITING JOURNAL', summaryLine(list), ''];
+    for (const e of list) {
+      out.push('='.repeat(40),
+        fmtLong(e.createdAt) + ', ' + fmtTime(e.createdAt),
+        'Prompt: ' + (e.prompt || 'none'),
+        'Words: ' + e.words,
+        '-'.repeat(40), '',
+        e.text, '');
+    }
+    return out.join('\n');
+  }
+
+  const msg = $('toolsmsg');
+  function say(text, isErr) {
+    msg.textContent = text;
+    msg.className = isErr ? 'err' : '';
+  }
+  const hasEntries = () => {
+    if (entries.length) return true;
+    say('Nothing to export yet.', true);
+    return false;
+  };
+
+  $('exMd').addEventListener('click', () => {
+    if (!hasEntries()) return;
+    download('journal-' + stamp() + '.md', 'text/markdown', buildMd());
+    say('Markdown file created.');
+  });
+  $('exTxt').addEventListener('click', () => {
+    if (!hasEntries()) return;
+    download('journal-' + stamp() + '.txt', 'text/plain', buildTxt());
+    say('Text file created.');
+  });
+  $('exCopy').addEventListener('click', async () => {
+    if (!hasEntries()) return;
+    const ok = await copyText(buildTxt());
+    flash($('exCopy'), ok ? 'Copied' : 'Copy failed');
+    say(ok ? 'All entries copied.' : 'Copying was blocked. Try Download .txt instead.', !ok);
+  });
+
+  /* ---------- Backup ---------- */
+  function renderBackupInfo() {
+    const m = loadMeta();
+    const old = !m.lastBackupAt || Date.now() - m.lastBackupAt > 14 * 86400000;
+    let t = m.lastBackupAt
+      ? 'Last backup exported: ' + fmtShort(m.lastBackupAt) + ', ' + fmtTime(m.lastBackupAt) + '.'
+      : 'No backup exported yet.';
+    if (entries.length && old) t += ' Consider exporting one.';
+    $('lastbackup').textContent = t;
+  }
+
+  $('exJson').addEventListener('click', () => {
+    const data = {
+      app: 'daily-journal',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      entries: sortedAsc().map(({ id, createdAt, text, prompt }) => ({ id, createdAt, text, prompt }))
+    };
+    download('journal-backup-' + stamp() + '.json', 'application/json', JSON.stringify(data, null, 2));
+    const m = loadMeta();
+    m.lastBackupAt = Date.now();
+    store.set(KEY_META, JSON.stringify(m));
+    renderBackupInfo();
+    say('Backup file created with ' + plural(entries.length, 'entry', 'entries') + '. Save it to Files or iCloud Drive.');
+  });
+
+  $('imp').addEventListener('click', () => $('impFile').click());
+
+  const readFile = (file) => new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = () => reject(r.error);
+    r.readAsText(file);
+  });
+
+  $('impFile').addEventListener('change', async (ev) => {
+    const input = ev.target;
+    const file = input.files && input.files[0];
+    input.value = '';
+    if (!file) return;
+    if (file.size > 25 * 1024 * 1024) { say('That file is too large to be a journal backup.', true); return; }
+    let data;
+    try { data = JSON.parse(await readFile(file)); } catch (e) { say('That file could not be read as a journal backup.', true); return; }
+    const list = Array.isArray(data) ? data : (data && Array.isArray(data.entries) ? data.entries : null);
+    if (!list) { say('No entries were found in that file.', true); return; }
+
+    const sig = (e) => e.createdAt + '|' + e.text;
+    const before = entries;
+    const next = entries.slice();
+    const haveId = new Set(next.map((e) => e.id));
+    const haveSig = new Set(next.map(sig));
+    let added = 0, skipped = 0, invalid = 0;
+    for (const raw of list) {
+      const e = cleanEntry(raw);
+      if (!e) { invalid++; continue; }
+      if (haveId.has(e.id) || haveSig.has(sig(e))) { skipped++; continue; }
+      next.push(e); haveId.add(e.id); haveSig.add(sig(e)); added++;
+    }
+    if (added) {
+      entries = next;
+      if (!persistEntries()) { entries = before; say('Import failed: not enough storage.', true); return; }
+    }
+    let t = 'Imported ' + plural(added, 'entry', 'entries') + '.';
+    if (skipped) t += ' ' + skipped + ' already here.';
+    if (invalid) t += ' ' + invalid + ' could not be used.';
+    say(t, !added && invalid > 0);
+    renderHistory();
+    refreshHeader();
+  });
+
+  /* ---------- Lifecycle ---------- */
+  let hiddenAt = 0;
+  function markHidden() { if (!hiddenAt) hiddenAt = Date.now(); saveDraftNow(); }
+  function markShown() {
+    const away = hiddenAt ? Date.now() - hiddenAt : 0;
+    hiddenAt = 0;
+    if (away > REOPEN_AFTER_MS) freshStart(); else refreshHeader();
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') markHidden(); else markShown();
+  });
+  window.addEventListener('pagehide', markHidden);
+  window.addEventListener('pageshow', (e) => { if (e.persisted) markShown(); });
+  setInterval(refreshHeader, 60000);
+
+  /* ---------- Home Screen icon (drawn at runtime, no image file needed) ---------- */
+  try {
+    const c = document.createElement('canvas');
+    c.width = c.height = 180;
+    const x = c.getContext('2d');
+    x.fillStyle = '#a64b2e';
+    x.fillRect(0, 0, 180, 180);
+    x.fillStyle = '#f5efe2';
+    x.font = 'bold 112px Georgia, serif';
+    x.textAlign = 'center';
+    x.textBaseline = 'middle';
+    x.fillText('J', 90, 96);
+    const l = document.createElement('link');
+    l.rel = 'apple-touch-icon';
+    l.href = c.toDataURL('image/png');
+    document.head.append(l);
+  } catch (e) { /* ignore */ }
+
+  /* ---------- Optional offline cache (only when served over https and sw.js sits next to this file) ---------- */
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+  }
+
+  /* ---------- Go ---------- */
+  freshStart();
+  requestAnimationFrame(fit);
+})();
+</script>
+</body>
+</html>
